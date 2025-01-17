@@ -1,0 +1,25 @@
+# Binaries
+/bin
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# Dependency directories
+/vendor/
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo 
+
+# sample workflow
+.github/workflows/issue-assistant.yml
