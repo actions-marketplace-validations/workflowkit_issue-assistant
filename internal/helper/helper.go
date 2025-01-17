@@ -8,16 +8,15 @@ import (
 	"os"
 
 	"github.com/canack/issue-assistant/pkg/ai"
-	"github.com/canack/issue-assistant/pkg/logger"
-
 	pkggithub "github.com/canack/issue-assistant/pkg/github"
+	"github.com/canack/issue-assistant/pkg/logger"
 )
 
+// Helper is the main struct that holds the clients and services
 type Helper struct {
-	githubToken     string
 	githubEventPath string
-	aiType          string
-	aiAPIKey        string
+	githubClient    *pkggithub.Client
+	aiService       ai.AIService
 }
 
 // Option is a function type that modifies Helper
@@ -40,19 +39,19 @@ func NewHelper(opts ...Option) (*Helper, error) {
 	return h, nil
 }
 
-// WithGitHubToken sets the GitHub token
-func WithGitHubToken(token string) Option {
+// WithGitHubClient sets the GitHub client
+func WithGitHubClient(token string) Option {
 	return func(h *Helper) error {
 		if token == "" {
 			return errors.New("github token cannot be empty")
 		}
-		h.githubToken = token
+		h.githubClient = pkggithub.NewClient(token)
 		return nil
 	}
 }
 
-// WithAIConfig sets the AI configuration
-func WithAIConfig(aiType, apiKey string) Option {
+// WithAIService sets the AI service
+func WithAIService(aiType string, apiKey string) Option {
 	return func(h *Helper) error {
 		if aiType == "" {
 			return errors.New("ai type cannot be empty")
@@ -60,8 +59,7 @@ func WithAIConfig(aiType, apiKey string) Option {
 		if apiKey == "" {
 			return errors.New("ai api key cannot be empty")
 		}
-		h.aiType = aiType
-		h.aiAPIKey = apiKey
+		h.aiService = ai.NewAIService(ai.ToAIType(aiType), apiKey)
 		return nil
 	}
 }
@@ -77,15 +75,13 @@ func WithGitHubEventPath(path string) Option {
 	}
 }
 
+// validate checks if the Helper is properly initialized
 func (h *Helper) validate() error {
-	if h.githubToken == "" {
-		return errors.New("github token is required")
+	if h.githubClient == nil {
+		return errors.New("github client is required")
 	}
-	if h.aiType == "" {
-		return errors.New("ai type is required")
-	}
-	if h.aiAPIKey == "" {
-		return errors.New("ai api key is required")
+	if h.aiService == nil {
+		return errors.New("ai service is required")
 	}
 	if h.githubEventPath == "" {
 		return errors.New("github event path is required")
@@ -93,34 +89,11 @@ func (h *Helper) validate() error {
 	return nil
 }
 
+// Help processes a GitHub issue event and provides AI-powered assistance
 func (h *Helper) Help(ctx context.Context) {
-	logger.Log.Info("initializing clients")
-	client := pkggithub.NewClient(h.githubToken)
-	analyzer := ai.NewAIService(ai.ToAIType(h.aiType), h.aiAPIKey)
-
-	eventData, err := os.ReadFile(h.githubEventPath)
+	event, err := h.parseEvent()
 	if err != nil {
-		logger.Log.Fatalf("failed to read event data: %v", err)
-	}
-
-	logger.Log.Info("processing GitHub event")
-	var event struct {
-		Action string `json:"action"`
-		Issue  struct {
-			Number int    `json:"number"`
-			Title  string `json:"title"`
-			Body   string `json:"body"`
-		} `json:"issue"`
-		Repository struct {
-			Owner struct {
-				Login string `json:"login"`
-			} `json:"owner"`
-			Name string `json:"name"`
-		} `json:"repository"`
-	}
-
-	if err := json.Unmarshal(eventData, &event); err != nil {
-		logger.Log.Fatalf("failed to parse event data: %v", err)
+		logger.Log.Fatalf("failed to parse event: %v", err)
 	}
 
 	if event.Action != "opened" {
@@ -128,30 +101,59 @@ func (h *Helper) Help(ctx context.Context) {
 		return
 	}
 
-	files, err := client.GetRepositoryContent(ctx, event.Repository.Owner.Login, event.Repository.Name)
+	h.processIssue(ctx, event)
+}
+
+// parseEvent reads and parses the GitHub event data
+func (h *Helper) parseEvent() (*GitHubEvent, error) {
+	eventData, err := os.ReadFile(h.githubEventPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read event data: %w", err)
+	}
+
+	var event GitHubEvent
+	if err := json.Unmarshal(eventData, &event); err != nil {
+		return nil, fmt.Errorf("failed to parse event data: %w", err)
+	}
+
+	return &event, nil
+}
+
+// processIssue handles the analysis and response for a GitHub issue
+func (h *Helper) processIssue(ctx context.Context, event *GitHubEvent) {
+	// Get repository content
+	files, err := h.githubClient.GetRepositoryContent(ctx, event.Repository.Owner.Login, event.Repository.Name)
 	if err != nil {
 		logger.Log.Fatalf("failed to get repository content: %v", err)
 	}
 
-	answer, _, err := analyzer.Query(ctx, event.Issue.Body, files)
+	// Analyze issue with AI
+	answer, _, err := h.aiService.Query(ctx, event.Issue.Body, files)
 	if err != nil {
 		logger.Log.Errorf("failed to analyze issue: %v", err)
+		return
 	}
 
-	err = client.CreateIssueComment(ctx,
-		event.Repository.Owner.Login, event.Repository.Name, event.Issue.Number, formatComment(answer))
+	// Create response comment
+	err = h.githubClient.CreateIssueComment(ctx,
+		event.Repository.Owner.Login,
+		event.Repository.Name,
+		event.Issue.Number,
+		h.formatComment(answer))
 	if err != nil {
 		logger.Log.Errorf("failed to create comment: %v", err)
+		return
 	}
 
 	logger.Log.Info("successfully completed analysis")
 }
 
-func formatComment(answer string) string {
+// formatComment formats the AI response as a GitHub issue comment
+func (h *Helper) formatComment(answer string) string {
 	return fmt.Sprintf(`🤖 AI Assistant Analysis
 
 %s
 
 ---
-_This analysis was performed by [Issue Analyzer](https://github.com/canack/issue-assistant). If you have any questions, please contact the repository maintainers._`, answer)
+_This analysis was performed by [Issue Assistant](https://github.com/canack/issue-assistant). If you have any questions, please contact the repository maintainers._`, answer)
 }

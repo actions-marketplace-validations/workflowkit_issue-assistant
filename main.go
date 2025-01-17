@@ -35,8 +35,8 @@ func main() {
 	}
 
 	hpr, err := helper.NewHelper(
-		helper.WithGitHubToken(token),
-		helper.WithAIConfig(aiType, openAIKey),
+		helper.WithGitHubClient(token),
+		helper.WithAIService(aiType, openAIKey),
 		helper.WithGitHubEventPath(eventPath),
 	)
 	if err != nil {
