@@ -99,7 +99,7 @@ Your responses should be:
 		resp, err := a.client.CreateChatCompletion(
 			ctx,
 			openai.ChatCompletionRequest{
-				Model: "chatgpt-4o-latest",
+				Model: "gpt-4-turbo",
 				Messages: []openai.ChatCompletionMessage{
 					{
 						Role:    openai.ChatMessageRoleSystem,
