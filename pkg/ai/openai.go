@@ -2,6 +2,7 @@ package ai
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -14,12 +15,10 @@ type OpenAI struct {
 	client *openai.Client
 }
 
-// TODO: opt processing
-// TODO: select model name
-// TODO: select temperature
-// TODO: select max tokens
-// TODO: Adjust max tokens based on the number of files
-// TODO: Adjust retries
+type responseMetadata struct {
+	Confidence    float64  `json:"confidence"`
+	RelevantFiles []string `json:"relevant_files"`
+}
 
 func newOpenAIService(apiKey string) AIService {
 	return &OpenAI{
@@ -35,6 +34,14 @@ func (a *OpenAI) Query(ctx context.Context, question string, files []github.GitH
 		"1. A detailed explanation with file references\n"+
 		"2. Include relevant Go code examples using ```go tags\n"+
 		"3. Keep the response clear and concise\n"+
+		"4. End your response with a confidence score in JSON format:\n"+
+		"   {\"confidence\": 0.8, \"relevant_files\": [\"file1.go\"]}\n"+
+		"\n"+
+		"Note about confidence score:\n"+
+		"- 0.0-0.3: Limited context, mostly guessing\n"+
+		"- 0.4-0.6: Partial context, moderate confidence\n"+
+		"- 0.7-0.9: Good context, high confidence\n"+
+		"- 1.0: Complete context, absolute certainty\n"+
 		"\n"+
 		"Codebase content:\n"+
 		"%s\n"+
@@ -69,12 +76,37 @@ func (a *OpenAI) Query(ctx context.Context, question string, files []github.GitH
 			continue
 		}
 
-		return resp.Choices[0].Message.Content, 1.0, nil
+		answer, metadata, err := parseAIResponse(resp.Choices[0].Message.Content)
+		if err != nil {
+			logger.Log.Warnf("Failed to parse AI response: %v", err)
+			lastErr = fmt.Errorf("response parsing error: %w", err)
+			continue
+		}
+
+		logger.Log.Debugf("AI Response - Confidence: %.2f, Files: %v", metadata.Confidence, metadata.RelevantFiles)
+		return answer, metadata.Confidence, nil
 	}
 
 	logger.Log.Errorf("failed after %d attempts: %v", maxRetries, lastErr)
-
 	return "", 0, fmt.Errorf("failed after %d attempts: %v", maxRetries, lastErr)
+}
+
+func parseAIResponse(response string) (string, responseMetadata, error) {
+	var metadata responseMetadata
+
+	lastBraceIndex := strings.LastIndex(response, "{")
+	if lastBraceIndex == -1 {
+		return response, metadata, fmt.Errorf("no JSON metadata found")
+	}
+
+	answer := strings.TrimSpace(response[:lastBraceIndex])
+	jsonPart := response[lastBraceIndex:]
+
+	if err := json.Unmarshal([]byte(jsonPart), &metadata); err != nil {
+		return response, metadata, fmt.Errorf("failed to parse metadata: %w", err)
+	}
+
+	return answer, metadata, nil
 }
 
 func formatFilesForPrompt(files []github.GitHubFile) string {
@@ -88,7 +120,6 @@ func formatFilesForPrompt(files []github.GitHubFile) string {
 
 		result += fmt.Sprintf("File: %s (%s)\n", file.Path, file.FileType)
 		result += "Content:\n```go"
-
 		result += fmt.Sprintf("\n%s\n```\n\n", file.Content)
 	}
 	return result
