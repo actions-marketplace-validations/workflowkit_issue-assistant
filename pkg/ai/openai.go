@@ -147,15 +147,7 @@ Your responses should be:
 func formatFilesForPrompt(files []github.GitHubFile) string {
 	var result string
 	for _, file := range files {
-		if !strings.HasSuffix(file.Path, ".go") ||
-			strings.Contains(file.Path, "/vendor/") ||
-			strings.HasSuffix(file.Path, "_test.go") {
-			continue
-		}
-
-		result += fmt.Sprintf("File: %s (%s)\n", file.Path, file.FileType)
-		result += "Content:\n```go"
-		result += fmt.Sprintf("\n%s\n```\n\n", file.Content)
+		result += fmt.Sprintf("File: %s\nContent:\n%s\n\n", file.Path, file.Content)
 	}
 	return result
 }

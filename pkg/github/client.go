@@ -3,6 +3,7 @@ package github
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/google/go-github/v45/github"
@@ -11,6 +12,7 @@ import (
 
 type Client struct {
 	client *github.Client
+	filter FileFilter
 }
 
 func NewClient(token string) *Client {
@@ -18,11 +20,15 @@ func NewClient(token string) *Client {
 		&oauth2.Token{AccessToken: token},
 	)
 	tc := oauth2.NewClient(context.Background(), ts)
-	ghClient := github.NewClient(tc)
-
 	return &Client{
-		client: ghClient,
+		client: github.NewClient(tc),
+		filter: DefaultFileFilter(),
 	}
+}
+
+func (c *Client) WithFileFilter(filter FileFilter) *Client {
+	c.filter = filter
+	return c
 }
 
 func (c *Client) GetRepositoryContent(ctx context.Context, owner, repo string) ([]GitHubFile, error) {
@@ -57,16 +63,15 @@ func (c *Client) traverseContent(ctx context.Context, owner, repo, path string, 
 
 		switch *content.Type {
 		case "file":
-			if isRelevantFile(*content.Name) {
+			if isRelevantFile(*content.Path, c.filter) {
 				fileContent, err := c.getFileContent(ctx, owner, repo, *content.Path)
 				if err != nil {
 					return fmt.Errorf("failed to get file content for %s: %w", *content.Path, err)
 				}
 
 				*files = append(*files, GitHubFile{
-					Path:     *content.Path,
-					Content:  fileContent,
-					FileType: getFileType(*content.Name),
+					Path:    *content.Path,
+					Content: fileContent,
 				})
 			}
 		case "dir":
@@ -97,29 +102,42 @@ func (c *Client) getFileContent(ctx context.Context, owner, repo, path string) (
 	return content, nil
 }
 
-func isRelevantFile(filename string) bool {
-	relevantExtensions := []string{
-		".go", ".js", ".ts", ".py", ".java", ".rb", ".php",
-		".md", ".txt", ".yaml", ".yml", ".json",
-	}
+func isRelevantFile(filename string, filter FileFilter) bool {
+	baseName := filepath.Base(filename)
 
-	for _, ext := range relevantExtensions {
-		if strings.HasSuffix(filename, ext) {
+	// Check if file is in allowed files list
+	for _, allowedFile := range filter.AllowedFiles {
+		if baseName == allowedFile {
 			return true
 		}
 	}
-	return false
-}
 
-func getFileType(filename string) string {
-	if strings.HasSuffix(filename, ".md") {
-		return "documentation"
+	// Check if file has an allowed extension
+	hasAllowedExt := false
+	for _, ext := range filter.AllowedExtensions {
+		if strings.HasSuffix(filename, ext) {
+			hasAllowedExt = true
+			break
+		}
 	}
-	if strings.HasSuffix(filename, ".go") {
-		return "source"
+	if !hasAllowedExt {
+		return false
 	}
-	if strings.HasSuffix(filename, ".yaml") || strings.HasSuffix(filename, ".yml") {
-		return "configuration"
+
+	// Check excluded paths
+	for _, path := range filter.ExcludedPaths {
+		if strings.Contains(filename, path) {
+			return false
+		}
 	}
-	return "other"
+
+	// Check excluded file patterns
+	for _, pattern := range filter.ExcludedFiles {
+		matched, err := filepath.Match(pattern, baseName)
+		if err == nil && matched {
+			return false
+		}
+	}
+
+	return true
 }
