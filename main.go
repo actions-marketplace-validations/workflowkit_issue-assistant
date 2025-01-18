@@ -24,9 +24,23 @@ func main() {
 		logger.Log.Fatal("OPENAI_API_KEY is required")
 	}
 
+	claudeKey := os.Getenv("CLAUDE_API_KEY")
+	if claudeKey == "" {
+		logger.Log.Fatal("CLAUDE_API_KEY is required")
+	}
+
 	aiType := os.Getenv("AI_TYPE")
 	if aiType == "" {
 		logger.Log.Fatal("AI_TYPE is required")
+	}
+
+	var apiKey string
+	if aiType == "openai" {
+		apiKey = openAIKey
+	} else if aiType == "claude" {
+		apiKey = claudeKey
+	} else {
+		logger.Log.Fatal("AI_TYPE is not supported")
 	}
 
 	eventPath := os.Getenv("GITHUB_EVENT_PATH")
@@ -49,7 +63,7 @@ func main() {
 
 	hpr, err := helper.NewHelper(
 		helper.WithGitHubClient(token),
-		helper.WithAIService(aiType, openAIKey),
+		helper.WithAIService(aiType, apiKey),
 		helper.WithGitHubEventPath(eventPath),
 		helper.WithFeatures(features),
 	)
