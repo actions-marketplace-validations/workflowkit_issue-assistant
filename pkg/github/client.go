@@ -141,3 +141,62 @@ func isRelevantFile(filename string, filter FileFilter) bool {
 
 	return true
 }
+
+// GetRepositoryLabels returns all labels in the repository
+func (c *Client) GetRepositoryLabels(ctx context.Context, owner, repo string) ([]*github.Label, error) {
+	var allLabels []*github.Label
+	opts := &github.ListOptions{
+		PerPage: 100, // GitHub API default is 30, we want more
+	}
+
+	for {
+		labels, resp, err := c.client.Issues.ListLabels(ctx, owner, repo, opts)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list repository labels: %w", err)
+		}
+		allLabels = append(allLabels, labels...)
+
+		if resp.NextPage == 0 {
+			break
+		}
+		opts.Page = resp.NextPage
+	}
+
+	return allLabels, nil
+}
+
+// GetLabelsForAIAnalysis returns formatted label information for AI analysis
+func (c *Client) GetLabelsForAIAnalysis(ctx context.Context, owner, repo string) (string, []*github.Label, error) {
+	labels, err := c.GetRepositoryLabels(ctx, owner, repo)
+	if err != nil {
+		return "", nil, err
+	}
+
+	formattedLabels := c.formatLabelsForPrompt(labels)
+	return formattedLabels, labels, nil
+}
+
+// formatLabelsForPrompt formats repository labels for AI analysis
+func (c *Client) formatLabelsForPrompt(labels []*github.Label) string {
+	var result string
+	result += "Available Labels:\n"
+
+	for _, label := range labels {
+		if label.Name != nil && label.Description != nil {
+			result += fmt.Sprintf("- %s: %s\n", *label.Name, *label.Description)
+		} else if label.Name != nil {
+			result += fmt.Sprintf("- %s\n", *label.Name)
+		}
+	}
+
+	return result
+}
+
+// AddLabelsToIssue adds the specified labels to an issue
+func (c *Client) AddLabelsToIssue(ctx context.Context, owner, repo string, issueNumber int, labels []string) error {
+	_, _, err := c.client.Issues.AddLabelsToIssue(ctx, owner, repo, issueNumber, labels)
+	if err != nil {
+		return fmt.Errorf("failed to add labels to issue: %w", err)
+	}
+	return nil
+}

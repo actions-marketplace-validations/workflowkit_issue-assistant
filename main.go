@@ -34,10 +34,24 @@ func main() {
 		logger.Log.Fatal("GITHUB_EVENT_PATH is required")
 	}
 
+	// Convert boolean flags to feature array
+	var features []helper.Feature
+	if os.Getenv("ENABLE_COMMENT") == "true" {
+		features = append(features, helper.FeatureComment)
+	}
+	if os.Getenv("ENABLE_LABEL") == "true" {
+		features = append(features, helper.FeatureLabel)
+	}
+
+	if len(features) == 0 {
+		logger.Log.Fatal("at least one feature must be enabled")
+	}
+
 	hpr, err := helper.NewHelper(
 		helper.WithGitHubClient(token),
 		helper.WithAIService(aiType, openAIKey),
 		helper.WithGitHubEventPath(eventPath),
+		helper.WithFeatures(features),
 	)
 	if err != nil {
 		logger.Log.Fatalf("failed to create helper: %v", err)

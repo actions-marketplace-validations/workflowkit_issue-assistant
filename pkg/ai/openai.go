@@ -11,14 +11,14 @@ import (
 	"github.com/sashabaranov/go-openai"
 )
 
-type OpenAI struct {
-	client *openai.Client
-}
-
 type AIResponse struct {
 	Answer        string   `json:"answer"`
 	Confidence    float64  `json:"confidence"`
 	RelevantFiles []string `json:"relevant_files"`
+}
+
+type OpenAI struct {
+	client *openai.Client
 }
 
 func newOpenAIService(apiKey string) AIService {
@@ -27,9 +27,52 @@ func newOpenAIService(apiKey string) AIService {
 	}
 }
 
-func (a *OpenAI) Query(ctx context.Context, question string, files []github.GitHubFile) (answer string, confidence float64, err error) {
+// makeRequest is a helper function to make OpenAI API requests with retries
+func (a *OpenAI) makeRequest(ctx context.Context, systemPrompt, userPrompt string) (string, error) {
 	const maxRetries = 3
+	var lastErr error
 
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		logger.Log.Debugf("making OpenAI request: %d", attempt+1)
+
+		resp, err := a.client.CreateChatCompletion(
+			ctx,
+			openai.ChatCompletionRequest{
+				Model: "gpt-4o-mini",
+				Messages: []openai.ChatCompletionMessage{
+					{
+						Role:    openai.ChatMessageRoleSystem,
+						Content: systemPrompt,
+					},
+					{
+						Role:    openai.ChatMessageRoleUser,
+						Content: userPrompt,
+					},
+				},
+				Temperature: 0.1,
+				MaxTokens:   2000,
+			},
+		)
+
+		if err != nil {
+			logger.Log.Warnf("OpenAI request failed attempt: %d: %v", attempt+1, err)
+			lastErr = fmt.Errorf("OpenAI API error: %w", err)
+			continue
+		}
+
+		content := resp.Choices[0].Message.Content
+
+		// Remove any markdown code block wrapping if exists
+		content = strings.TrimPrefix(content, "```json")
+		content = strings.TrimPrefix(content, "```")
+		content = strings.TrimSuffix(content, "```")
+		return strings.TrimSpace(content), nil
+	}
+
+	return "", fmt.Errorf("failed after %d attempts: %w", maxRetries, lastErr)
+}
+
+func (a *OpenAI) AnalyzeCode(ctx context.Context, question string, files []github.GitHubFile) (answer string, confidence float64, err error) {
 	systemPrompt := `You are a specialized AI code assistant with expertise in analyzing codebases and providing technical explanations.
 
 Your core responsibilities:
@@ -78,70 +121,71 @@ Your responses should be:
 		"6. Ensure the response is complete (no truncated sentences or examples)\n"+
 		"7. Return ONLY the JSON response, do not wrap it in markdown code blocks\n"+
 		"\n"+
-		"Confidence Score Guide:\n"+
-		"- 0.0-0.3: Limited context or understanding\n"+
-		"- 0.4-0.6: Partial context, moderate understanding\n"+
-		"- 0.7-0.9: Good context, clear understanding\n"+
-		"- 1.0: Complete context, full understanding\n"+
-		"\n"+
 		"Available Files:\n"+
 		"%s\n"+
 		"\n"+
 		"Question:\n"+
 		"%s", formatFilesForPrompt(files), question)
 
-	logger.Log.Infof("Analyzing issue: [%s]: %d files", question, len(files))
+	logger.Log.Infof("Analyzing code: [%s] with %d files", question, len(files))
 
-	var lastErr error
-	for attempt := 0; attempt < maxRetries; attempt++ {
-		logger.Log.Debugf("making OpenAI request: %d", attempt+1)
-
-		resp, err := a.client.CreateChatCompletion(
-			ctx,
-			openai.ChatCompletionRequest{
-				Model: "gpt-4o-mini",
-				Messages: []openai.ChatCompletionMessage{
-					{
-						Role:    openai.ChatMessageRoleSystem,
-						Content: systemPrompt,
-					},
-					{
-						Role:    openai.ChatMessageRoleUser,
-						Content: userPrompt,
-					},
-				},
-				Temperature: 0.1,
-				MaxTokens:   2000,
-			},
-		)
-
-		if err != nil {
-			logger.Log.Warnf("OpenAI request failed attempt: %d: %v", attempt+1, err)
-			lastErr = fmt.Errorf("OpenAI API error: %w", err)
-			continue
-		}
-
-		var aiResp AIResponse
-		content := resp.Choices[0].Message.Content
-
-		// Remove any markdown code block wrapping if exists
-		content = strings.TrimPrefix(content, "```json")
-		content = strings.TrimPrefix(content, "```")
-		content = strings.TrimSuffix(content, "```")
-		content = strings.TrimSpace(content)
-
-		if err := json.Unmarshal([]byte(content), &aiResp); err != nil {
-			logger.Log.Warnf("Failed to parse AI response [%s]: %v", content, err)
-			lastErr = fmt.Errorf("response parsing error: %w", err)
-			continue
-		}
-
-		logger.Log.Debugf("AI Response - Confidence: %.2f, Files: %v", aiResp.Confidence, aiResp.RelevantFiles)
-		return aiResp.Answer, aiResp.Confidence, nil
+	content, err := a.makeRequest(ctx, systemPrompt, userPrompt)
+	if err != nil {
+		return "", 0, err
 	}
 
-	logger.Log.Errorf("failed after %d attempts: %v", maxRetries, lastErr)
-	return "", 0, fmt.Errorf("failed after %d attempts: %v", maxRetries, lastErr)
+	var aiResp AIResponse
+	if err := json.Unmarshal([]byte(content), &aiResp); err != nil {
+		return "", 0, fmt.Errorf("failed to parse AI response: %w", err)
+	}
+
+	return aiResp.Answer, aiResp.Confidence, nil
+}
+
+func (a *OpenAI) AnalyzeLabels(ctx context.Context, title, body string, availableLabels string) (github.LabelAnalysis, error) {
+	systemPrompt := `You are an AI assistant specialized in analyzing GitHub issues and suggesting appropriate labels.
+
+Your task is to:
+1. Analyze the issue title and body
+2. Consider the available labels and their descriptions
+3. Suggest relevant labels with confidence scores
+4. Provide brief explanations for your suggestions
+
+Guidelines:
+- Only suggest labels that are highly relevant
+- Consider both technical and non-technical aspects
+- Be conservative with confidence scores
+- Focus on the main topics and themes of the issue`
+
+	userPrompt := fmt.Sprintf("Analyze the issue and suggest appropriate labels. Provide your response in the following JSON format (DO NOT wrap in code blocks):\n"+
+		"{\n"+
+		"  \"suggestedLabels\": {\n"+
+		"    \"label-name\": 0.95,\n"+
+		"    \"another-label\": 0.85\n"+
+		"  },\n"+
+		"  \"explanation\": \"Brief explanation of why these labels were chosen\"\n"+
+		"}\n\n"+
+		"Confidence Score Guide:\n"+
+		"- 0.0-0.3: Weak relevance\n"+
+		"- 0.4-0.6: Moderate relevance\n"+
+		"- 0.7-0.9: Strong relevance\n"+
+		"- 1.0: Perfect match\n\n"+
+		"Issue Title: %s\nIssue Body:\n%s\n\nAvailable Labels:\n%s",
+		title, body, availableLabels)
+
+	logger.Log.Infof("Analyzing labels for issue: [%s]", title)
+
+	content, err := a.makeRequest(ctx, systemPrompt, userPrompt)
+	if err != nil {
+		return github.LabelAnalysis{}, err
+	}
+
+	var analysis github.LabelAnalysis
+	if err := json.Unmarshal([]byte(content), &analysis); err != nil {
+		return github.LabelAnalysis{}, fmt.Errorf("failed to parse label analysis: %w", err)
+	}
+
+	return analysis, nil
 }
 
 func formatFilesForPrompt(files []github.GitHubFile) string {

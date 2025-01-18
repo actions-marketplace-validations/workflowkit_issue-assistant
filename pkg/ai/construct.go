@@ -8,8 +8,20 @@ import (
 	"github.com/canack/issue-assistant/pkg/logger"
 )
 
+// CodeAnalyzer analyzes code and provides detailed explanations
+type CodeAnalyzer interface {
+	AnalyzeCode(ctx context.Context, question string, files []github.GitHubFile) (answer string, confidence float64, err error)
+}
+
+// LabelAnalyzer suggests labels for GitHub issues
+type LabelAnalyzer interface {
+	AnalyzeLabels(ctx context.Context, title, body string, availableLabels string) (labelAnalysis github.LabelAnalysis, err error)
+}
+
+// AIService combines all analysis capabilities
 type AIService interface {
-	Query(ctx context.Context, question string, files []github.GitHubFile) (answer string, confidence float64, err error)
+	CodeAnalyzer
+	LabelAnalyzer
 }
 
 // We do not control AI model type because of every AI service has its own model

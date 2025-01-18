@@ -5,6 +5,14 @@ type GitHubFile struct {
 	Content string
 }
 
+// LabelAnalysis represents the result of analyzing an issue for label suggestions
+type LabelAnalysis struct {
+	// SuggestedLabels is a map of label names to confidence scores (0.0-1.0)
+	SuggestedLabels map[string]float64
+	// Explanation provides reasoning for each suggested label
+	Explanation string
+}
+
 // FileFilter represents the configuration for file filtering
 type FileFilter struct {
 	// AllowedExtensions is a list of file extensions to include (e.g. ".go", ".md")
