@@ -11,48 +11,48 @@ type basicLogger struct {
 }
 
 func (l *basicLogger) Error(msg string) {
-	l.logger.Println(msg)
+	l.logger.Println("❌ " + msg)
 }
 
 func (l *basicLogger) Errorf(msg string, args ...interface{}) {
 	message := fmt.Sprintf(msg, args...)
-	l.logger.Println(message)
+	l.logger.Println("❌ " + message)
 }
 
 func (l *basicLogger) Warn(msg string) {
-	l.logger.Println(msg)
+	l.logger.Println("⚠️ " + msg)
 }
 
 func (l *basicLogger) Warnf(msg string, args ...interface{}) {
 	message := fmt.Sprintf(msg, args...)
-	l.logger.Println(message)
+	l.logger.Println("⚠️ " + message)
 }
 
 func (l *basicLogger) Debug(msg string) {
-	l.logger.Println(msg)
+	l.logger.Println("🔍 " + msg)
 }
 
 func (l *basicLogger) Debugf(msg string, args ...interface{}) {
 	message := fmt.Sprintf(msg, args...)
-	l.logger.Println(message)
+	l.logger.Println("🔍 " + message)
 }
 
 func (l *basicLogger) Info(msg string) {
-	l.logger.Println(msg)
+	l.logger.Println("🔵 " + msg)
 }
 
 func (l *basicLogger) Infof(msg string, args ...interface{}) {
 	message := fmt.Sprintf(msg, args...)
-	l.logger.Println(message)
+	l.logger.Println("🔵 " + message)
 }
 
 func (l *basicLogger) Fatal(msg string) {
-	l.logger.Fatal(msg)
+	l.logger.Fatal("☠️ " + msg)
 }
 
 func (l *basicLogger) Fatalf(msg string, args ...interface{}) {
 	message := fmt.Sprintf(msg, args...)
-	l.logger.Fatal(message)
+	l.logger.Fatal("☠️ " + message)
 }
 
 var (

@@ -13,43 +13,43 @@ type zapLogger struct {
 }
 
 func (l *zapLogger) Error(msg string) {
-	l.logger.Sugar().Error(msg)
+	l.logger.Sugar().Error("❌ " + msg)
 }
 
 func (l *zapLogger) Errorf(msg string, args ...interface{}) {
-	l.logger.Sugar().Errorf(msg, args...)
+	l.logger.Sugar().Errorf("❌ "+msg, args...)
 }
 
 func (l *zapLogger) Warn(msg string) {
-	l.logger.Sugar().Warn(msg)
+	l.logger.Sugar().Warn("⚠️ " + msg)
 }
 
 func (l *zapLogger) Warnf(msg string, args ...interface{}) {
-	l.logger.Sugar().Warnf(msg, args...)
+	l.logger.Sugar().Warnf("⚠️ "+msg, args...)
 }
 
 func (l *zapLogger) Debug(msg string) {
-	l.logger.Sugar().Debug(msg)
+	l.logger.Sugar().Debug("🔍 " + msg)
 }
 
 func (l *zapLogger) Debugf(msg string, args ...interface{}) {
-	l.logger.Sugar().Debugf(msg, args...)
+	l.logger.Sugar().Debugf("🔍 "+msg, args...)
 }
 
 func (l *zapLogger) Info(msg string) {
-	l.logger.Sugar().Info(msg)
+	l.logger.Sugar().Info("🔵 " + msg)
 }
 
 func (l *zapLogger) Infof(msg string, args ...interface{}) {
-	l.logger.Sugar().Infof(msg, args...)
+	l.logger.Sugar().Infof("🔵 "+msg, args...)
 }
 
 func (l *zapLogger) Fatal(msg string) {
-	l.logger.Sugar().Fatal(msg)
+	l.logger.Sugar().Fatal("☠️ " + msg)
 }
 
 func (l *zapLogger) Fatalf(msg string, args ...interface{}) {
-	l.logger.Sugar().Fatalf(msg, args...)
+	l.logger.Sugar().Fatalf("☠️"+msg, args...)
 }
 
 var (
@@ -83,12 +83,12 @@ func create() {
 	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	encoderConfig.EncodeDuration = zapcore.StringDurationEncoder
 	encoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
-	encoderConfig.FunctionKey = "func"
 	encoderConfig.LevelKey = "level"
 	encoderConfig.TimeKey = "ts"
 	encoderConfig.MessageKey = "msg"
 	encoderConfig.CallerKey = "caller"
 	encoderConfig.StacktraceKey = "stacktrace"
+	encoderConfig.FunctionKey = ""
 	encoder = zapcore.NewConsoleEncoder(encoderConfig)
 
 	consoleCore := zapcore.NewCore(encoder, consoleWriteSyncer, level)
