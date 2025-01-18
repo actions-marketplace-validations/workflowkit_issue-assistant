@@ -32,8 +32,7 @@ func NewAIService(aiType AIType, apiKey string) AIService {
 	case AITypeOpenAI:
 		return newOpenAIService(apiKey)
 	case AITypeClaude:
-		// return newClaudeService(apiKey)
-		logger.Log.Fatalf("Claude isn't implemented yet")
+		return newClaudeService(apiKey)
 	default:
 		logger.Log.Fatalf("AI type %s is not supported", aiType)
 	}
