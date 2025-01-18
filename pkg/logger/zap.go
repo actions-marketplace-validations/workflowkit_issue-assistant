@@ -74,7 +74,6 @@ func create() {
 	var encoderConfig zapcore.EncoderConfig
 
 	var loggerOptions []zap.Option
-	loggerOptions = append(loggerOptions, zap.AddCaller(), zap.AddCallerSkip(1))
 
 	encoderConfig = zap.NewDevelopmentEncoderConfig()
 	level = zap.DebugLevel
@@ -86,9 +85,9 @@ func create() {
 	encoderConfig.LevelKey = "level"
 	encoderConfig.TimeKey = "ts"
 	encoderConfig.MessageKey = "msg"
-	encoderConfig.CallerKey = "caller"
+	encoderConfig.CallerKey = ""
 	encoderConfig.StacktraceKey = "stacktrace"
-	encoderConfig.FunctionKey = ""
+	encoderConfig.FunctionKey = "" 
 	encoder = zapcore.NewConsoleEncoder(encoderConfig)
 
 	consoleCore := zapcore.NewCore(encoder, consoleWriteSyncer, level)
