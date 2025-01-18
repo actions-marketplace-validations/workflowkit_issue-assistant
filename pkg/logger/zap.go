@@ -82,14 +82,14 @@ func create() {
 
 	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	encoderConfig.EncodeDuration = zapcore.StringDurationEncoder
-	encoderConfig.EncodeLevel = zapcore.LowercaseLevelEncoder
+	encoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 	encoderConfig.FunctionKey = "func"
 	encoderConfig.LevelKey = "level"
 	encoderConfig.TimeKey = "ts"
 	encoderConfig.MessageKey = "msg"
 	encoderConfig.CallerKey = "caller"
 	encoderConfig.StacktraceKey = "stacktrace"
-	encoder = zapcore.NewJSONEncoder(encoderConfig)
+	encoder = zapcore.NewConsoleEncoder(encoderConfig)
 
 	consoleCore := zapcore.NewCore(encoder, consoleWriteSyncer, level)
 	zapCore := zapcore.NewTee(consoleCore)
