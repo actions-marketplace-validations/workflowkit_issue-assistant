@@ -79,15 +79,8 @@ func create() {
 	level = zap.DebugLevel
 	loggerOptions = append(loggerOptions, zap.AddStacktrace(zapcore.ErrorLevel))
 
-	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-	encoderConfig.EncodeDuration = zapcore.StringDurationEncoder
+	encoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout("2006-01-02 15:04:05.000")
 	encoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
-	encoderConfig.LevelKey = "level"
-	encoderConfig.TimeKey = "ts"
-	encoderConfig.MessageKey = "msg"
-	encoderConfig.CallerKey = ""
-	encoderConfig.StacktraceKey = "stacktrace"
-	encoderConfig.FunctionKey = "" 
 	encoder = zapcore.NewConsoleEncoder(encoderConfig)
 
 	consoleCore := zapcore.NewCore(encoder, consoleWriteSyncer, level)
