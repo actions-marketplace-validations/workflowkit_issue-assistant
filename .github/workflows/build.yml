@@ -22,7 +22,4 @@ jobs:
           run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
         - name: Build and push
           run: |
-            docker buildx build --platform linux/amd64,linux/arm64 \
-              -t $(echo 'ghcr.io/${{ github.repository }}:${{ github.ref_name }}' | tr '[:upper:]' '[:lower:]') \
-              -t $(echo 'ghcr.io/${{ github.repository }}:v1' | tr '[:upper:]' '[:lower:]') \
-              --push .
+            docker buildx build --platform linux/amd64,linux/arm64 -t $(echo 'ghcr.io/${{ github.repository }}:${{ github.ref_name }}' | tr '[:upper:]' '[:lower:]') --push . 
