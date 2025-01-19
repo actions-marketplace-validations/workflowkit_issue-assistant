@@ -1,5 +1,5 @@
 name: 'Issue Assistant'
-description: 'AI-powered GitHub Issue assistant that provides intelligent responses and label suggestions using OpenAI GPT-4 or Anthropic Claude'
+description: 'AI-powered GitHub Issue assistant that analyzes issues and provides intelligent responses using GPT-4 or Claude'
 author: 'workflowkit'
 
 # Categories for GitHub Marketplace
