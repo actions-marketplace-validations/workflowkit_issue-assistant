@@ -4,8 +4,8 @@ import (
 	"context"
 	"strings"
 
-	"github.com/canack/issue-assistant/pkg/github"
-	"github.com/canack/issue-assistant/pkg/logger"
+	"github.com/workflowkit/issue-assistant/pkg/github"
+	"github.com/workflowkit/issue-assistant/pkg/logger"
 )
 
 // CodeAnalyzer analyzes code and provides detailed explanations
@@ -30,8 +30,10 @@ type AIService interface {
 func NewAIService(aiType AIType, apiKey string) AIService {
 	switch aiType {
 	case AITypeOpenAI:
+		logger.Log.Info("Using OpenAI")
 		return newOpenAIService(apiKey)
 	case AITypeClaude:
+		logger.Log.Info("Using Claude")
 		return newClaudeService(apiKey)
 	default:
 		logger.Log.Fatalf("AI type %s is not supported", aiType)

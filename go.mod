@@ -1,16 +1,16 @@
-module github.com/canack/issue-assistant
+module github.com/workflowkit/issue-assistant
 
 go 1.23
 
 require (
+	github.com/anthropics/anthropic-sdk-go v0.2.0-alpha.8
 	github.com/google/go-github/v45 v45.2.0
-	github.com/sashabaranov/go-openai v1.17.9
-	go.uber.org/zap v1.26.0
-	golang.org/x/oauth2 v0.21.0
+	github.com/sashabaranov/go-openai v1.36.1
+	go.uber.org/zap v1.27.0
+	golang.org/x/oauth2 v0.25.0
 )
 
 require (
-	github.com/anthropics/anthropic-sdk-go v0.2.0-alpha.8 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/tidwall/gjson v1.14.4 // indirect
 	github.com/tidwall/match v1.1.1 // indirect

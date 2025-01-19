@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/canack/issue-assistant/pkg/github"
-	"github.com/canack/issue-assistant/pkg/logger"
 	"github.com/sashabaranov/go-openai"
+	"github.com/workflowkit/issue-assistant/pkg/github"
+	"github.com/workflowkit/issue-assistant/pkg/logger"
 )
 
 type AIResponse struct {
@@ -38,7 +38,7 @@ func (a *OpenAI) makeRequest(ctx context.Context, systemPrompt, userPrompt strin
 		resp, err := a.client.CreateChatCompletion(
 			ctx,
 			openai.ChatCompletionRequest{
-				Model: "gpt-4o-mini",
+				Model: openai.GPT4oMini,
 				Messages: []openai.ChatCompletionMessage{
 					{
 						Role:    openai.ChatMessageRoleSystem,

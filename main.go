@@ -4,8 +4,8 @@ import (
 	"context"
 	"os"
 
-	"github.com/canack/issue-assistant/internal/helper"
-	"github.com/canack/issue-assistant/pkg/logger"
+	"github.com/workflowkit/issue-assistant/internal/helper"
+	"github.com/workflowkit/issue-assistant/pkg/logger"
 )
 
 func main() {

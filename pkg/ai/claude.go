@@ -8,8 +8,8 @@ import (
 
 	"github.com/anthropics/anthropic-sdk-go"
 	"github.com/anthropics/anthropic-sdk-go/option"
-	"github.com/canack/issue-assistant/pkg/github"
-	"github.com/canack/issue-assistant/pkg/logger"
+	"github.com/workflowkit/issue-assistant/pkg/github"
+	"github.com/workflowkit/issue-assistant/pkg/logger"
 )
 
 type Claude struct {

@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/canack/issue-assistant/pkg/ai"
-	pkggithub "github.com/canack/issue-assistant/pkg/github"
-	"github.com/canack/issue-assistant/pkg/logger"
+	"github.com/workflowkit/issue-assistant/pkg/ai"
+	pkggithub "github.com/workflowkit/issue-assistant/pkg/github"
+	"github.com/workflowkit/issue-assistant/pkg/logger"
 )
 
 // Feature represents an AI assistant feature
@@ -256,7 +256,7 @@ I've added the following labels to this issue:
 %s
 
 ---
-_This label analysis was performed by [Issue Assistant](https://github.com/canack/issue-assistant). If you have any questions, please contact the repository maintainers._`,
+_This label analysis was performed by [Issue Assistant](https://github.com/workflowkit/issue-assistant). If you have any questions, please contact the repository maintainers._`,
 		formatLabelList(labels),
 		explanation,
 	)
@@ -278,5 +278,5 @@ func (h *Helper) formatComment(answer string) string {
 %s
 
 ---
-_This analysis was performed by [Issue Assistant](https://github.com/canack/issue-assistant). If you have any questions, please contact the repository maintainers._`, answer)
+_This analysis was performed by [Issue Assistant](https://github.com/workflowkit/issue-assistant). If you have any questions, please contact the repository maintainers._`, answer)
 }

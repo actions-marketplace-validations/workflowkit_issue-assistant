@@ -1,7 +1,7 @@
 # Issue Assistant
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/canack/issue-assistant)](https://goreportcard.com/report/github.com/canack/issue-assistant)
-[![GitHub Actions](https://github.com/canack/issue-assistant/workflows/issue-analyzer/badge.svg)](https://github.com/canack/issue-assistant/actions)
+[![Go Report Card](https://goreportcard.com/badge/github.com/workflowkit/issue-assistant)](https://goreportcard.com/report/github.com/workflowkit/issue-assistant)
+[![GitHub Actions](https://github.com/workflowkit/issue-assistant/workflows/issue-analyzer/badge.svg)](https://github.com/workflowkit/issue-assistant/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 AI-powered GitHub Issue assistant that provides intelligent responses based on repository content using various AI models (OpenAI GPT-4, Anthropic Claude).
@@ -75,7 +75,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          repository: canack/issue-assistant
+          repository: workflowkit/issue-assistant
           token: ${{ secrets.GITHUB_TOKEN }}
           path: .issue-assistant
       
@@ -110,7 +110,7 @@ jobs:
 
 ```bash
 # Clone the repository
-git clone https://github.com/canack/issue-assistant.git
+git clone https://github.com/workflowkit/issue-assistant.git
 
 # Install dependencies
 go mod tidy
