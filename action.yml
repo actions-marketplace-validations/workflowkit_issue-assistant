@@ -9,7 +9,7 @@ categories:
   - 'Issue Management'
 
 branding:
-  icon: 'brain'
+  icon: 'check-circle'
   color: 'purple'
 
 inputs:
