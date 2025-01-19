@@ -26,9 +26,10 @@ func newClaudeService(apiKey string) AIService {
 func (c *Claude) makeRequest(ctx context.Context, systemPrompt, userPrompt string) (string, error) {
 	const maxRetries = 3
 	var lastErr error
+	baseTemperature := float64(0.1)
 
 	for attempt := 0; attempt < maxRetries; attempt++ {
-		logger.Log.Debugf("making Claude request: %d", attempt+1)
+		logger.Log.Debugf("making Claude request: %d with temperature: %.2f", attempt+1, baseTemperature)
 
 		resp, err := c.client.Messages.New(ctx, anthropic.MessageNewParams{
 			Model:     anthropic.F("claude-3-5-haiku-20241022"),
@@ -42,27 +43,42 @@ func (c *Claude) makeRequest(ctx context.Context, systemPrompt, userPrompt strin
 			Messages: anthropic.F([]anthropic.MessageParam{
 				anthropic.NewUserMessage(anthropic.NewTextBlock(userPrompt)),
 			}),
-			Temperature: anthropic.F(0.1),
+			Temperature: anthropic.F(baseTemperature),
 		})
 
 		if err != nil {
 			logger.Log.Warnf("Claude request failed attempt: %d: %v", attempt+1, err)
 			lastErr = fmt.Errorf("Claude API error: %w", err)
+			baseTemperature += 0.1
 			continue
 		}
 
 		if len(resp.Content) == 0 {
 			lastErr = fmt.Errorf("empty response from Claude")
+			baseTemperature += 0.1
 			continue
 		}
 
 		content := resp.Content[0].Text
 
+		// Clean and validate the response
+		content = strings.TrimSpace(content)
 		// Remove any markdown code block wrapping if exists
 		content = strings.TrimPrefix(content, "```json")
 		content = strings.TrimPrefix(content, "```")
 		content = strings.TrimSuffix(content, "```")
-		return strings.TrimSpace(content), nil
+		content = strings.TrimSpace(content)
+
+		// Try to parse as generic JSON first
+		var jsonContent interface{}
+		if err := json.Unmarshal([]byte(content), &jsonContent); err != nil {
+			logger.Log.Warnf("Invalid JSON response: %v", err)
+			lastErr = fmt.Errorf("invalid JSON response: %w", err)
+			baseTemperature += 0.1
+			continue
+		}
+
+		return content, nil
 	}
 
 	return "", fmt.Errorf("failed after %d attempts: %w", maxRetries, lastErr)

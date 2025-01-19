@@ -31,9 +31,10 @@ func newOpenAIService(apiKey string) AIService {
 func (a *OpenAI) makeRequest(ctx context.Context, systemPrompt, userPrompt string) (string, error) {
 	const maxRetries = 3
 	var lastErr error
+	baseTemperature := float32(0.1)
 
 	for attempt := 0; attempt < maxRetries; attempt++ {
-		logger.Log.Debugf("making OpenAI request: %d", attempt+1)
+		logger.Log.Debugf("making OpenAI request: %d with temperature: %.2f", attempt+1, baseTemperature)
 
 		resp, err := a.client.CreateChatCompletion(
 			ctx,
@@ -49,7 +50,7 @@ func (a *OpenAI) makeRequest(ctx context.Context, systemPrompt, userPrompt strin
 						Content: userPrompt,
 					},
 				},
-				Temperature: 0.1,
+				Temperature: baseTemperature,
 				MaxTokens:   2000,
 			},
 		)
@@ -57,16 +58,29 @@ func (a *OpenAI) makeRequest(ctx context.Context, systemPrompt, userPrompt strin
 		if err != nil {
 			logger.Log.Warnf("OpenAI request failed attempt: %d: %v", attempt+1, err)
 			lastErr = fmt.Errorf("OpenAI API error: %w", err)
+			baseTemperature += 0.1
 			continue
 		}
 
 		content := resp.Choices[0].Message.Content
 
 		// Remove any markdown code block wrapping if exists
+		content = strings.TrimSpace(content)
 		content = strings.TrimPrefix(content, "```json")
 		content = strings.TrimPrefix(content, "```")
 		content = strings.TrimSuffix(content, "```")
-		return strings.TrimSpace(content), nil
+		content = strings.TrimSpace(content)
+
+		// Try to parse as generic JSON first
+		var jsonContent interface{}
+		if err := json.Unmarshal([]byte(content), &jsonContent); err != nil {
+			logger.Log.Warnf("Invalid JSON response: %v", err)
+			lastErr = fmt.Errorf("invalid JSON response: %w", err)
+			baseTemperature += 0.1
+			continue
+		}
+
+		return content, nil
 	}
 
 	return "", fmt.Errorf("failed after %d attempts: %w", maxRetries, lastErr)
