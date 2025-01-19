@@ -34,7 +34,7 @@ jobs:
       issues: write
       contents: read
     steps:
-      - uses: workflowkit/issue-assistant@v1
+      - uses: workflowkit/issue-assistant@v1.0.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           ai_type: "openai"  # or "claude"
@@ -72,7 +72,7 @@ That's it! Now when someone opens an issue:
 
 ### Using with OpenAI:
 ```yaml
-- uses: workflowkit/issue-assistant@v1
+- uses: workflowkit/issue-assistant@v1.0.0
   with:
     github_token: ${{ secrets.GITHUB_TOKEN }}
     ai_type: "openai"
@@ -82,7 +82,7 @@ That's it! Now when someone opens an issue:
 
 ### Using with Claude:
 ```yaml
-- uses: workflowkit/issue-assistant@v1
+- uses: workflowkit/issue-assistant@v1.0.0
   with:
     github_token: ${{ secrets.GITHUB_TOKEN }}
     ai_type: "claude"
@@ -92,7 +92,7 @@ That's it! Now when someone opens an issue:
 
 ### Enable All Features:
 ```yaml
-- uses: workflowkit/issue-assistant@v1
+- uses: workflowkit/issue-assistant@v1.0.0
   with:
     github_token: ${{ secrets.GITHUB_TOKEN }}
     ai_type: "openai"
