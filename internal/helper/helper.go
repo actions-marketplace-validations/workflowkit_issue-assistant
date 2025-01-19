@@ -247,7 +247,7 @@ func (h *Helper) processLabels(ctx context.Context, event *GitHubEvent) {
 
 // formatLabelExplanation formats the label explanation as a GitHub issue comment
 func (h *Helper) formatLabelExplanation(labels []string, explanation string) string {
-	return fmt.Sprintf(`🏷️ AI Label Analysis
+	return fmt.Sprintf(`🏷️ AI Label Assistant
 
 I've added the following labels to this issue:
 %s
@@ -273,7 +273,7 @@ func formatLabelList(labels []string) string {
 
 // formatComment formats the AI response as a GitHub issue comment
 func (h *Helper) formatComment(answer string) string {
-	return fmt.Sprintf(`🤖 AI Assistant Analysis
+	return fmt.Sprintf(`🤖 AI Issue Assistant
 
 %s
 

@@ -17,48 +17,9 @@ AI-powered GitHub Issue assistant that provides intelligent responses based on r
 - 🧠 Multiple AI model support (OpenAI, Claude)
 - 📋 Customizable response templates
 
-## Requirements
+## Quick Start
 
-- Go 1.23 or higher
-- GitHub Personal Access Token (PAT) with `repo` scope
-- AI API Key (OpenAI or Anthropic)
-- Docker (optional, for containerized running)
-
-## Environment Variables
-
-| Variable | Description | Required | Default |
-|----------|-------------|----------|---------|
-| `GITHUB_TOKEN` | GitHub PAT with repo scope | Yes | - |
-| `OPENAI_API_KEY` | OpenAI API Key | Yes* | - |
-| `CLAUDE_API_KEY` | Anthropic Claude API Key | Yes* | - |
-| `AI_TYPE` | AI model type (openai/claude) | Yes | - |
-
-*Either OPENAI_API_KEY or CLAUDE_API_KEY is required based on AI_TYPE
-
-## Project Structure
-
-```
-.
-├── cmd/
-│   └── issue-assistant/
-├── internal/
-│   └── helper/
-├── pkg/
-│   ├── ai/
-│   ├── github/
-│   └── logger/
-└── .github/
-    └── workflows/
-```
-
-## Setup
-
-1. Create required secrets in your repository:
-   - `GITHUB_TOKEN`: GitHub token with repo scope (automatically provided by GitHub Actions)
-   - `OPENAI_API_KEY`: Your OpenAI API key (if using OpenAI)
-   - `CLAUDE_API_KEY`: Your Claude API key (if using Claude)
-
-2. Add the following workflow file to your repository (`.github/workflows/issue-assistant.yml`):
+1. Add this workflow to your repository (`.github/workflows/issue-assistant.yml`):
 
 ```yaml
 name: Issue Assistant
@@ -73,56 +34,71 @@ jobs:
       issues: write
       contents: read
     steps:
-      - uses: actions/checkout@v3
+      - uses: workflowkit/issue-assistant@v1
         with:
-          repository: workflowkit/issue-assistant
-          token: ${{ secrets.GITHUB_TOKEN }}
-          path: .issue-assistant
-      
-      - name: Build and run assistant
-        working-directory: .issue-assistant
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          AI_TYPE: "openai"  # or "claude"
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
-        run: |
-          docker build -t issue-assistant .
-          docker run --rm \
-            -e GITHUB_TOKEN \
-            -e AI_TYPE \
-            -e OPENAI_API_KEY \
-            -e CLAUDE_API_KEY \
-            -e GITHUB_EVENT_PATH \
-            -v $GITHUB_EVENT_PATH:$GITHUB_EVENT_PATH \
-            issue-assistant
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          ai_type: "openai"  # or "claude"
+          openai_api_key: ${{ secrets.OPENAI_API_KEY }}
+          # claude_api_key: ${{ secrets.CLAUDE_API_KEY }}  # if using claude
+          enable_comment: "true"   # required: at least one feature must be enabled
+          enable_label: "false"    # required: at least one feature must be enabled
 ```
 
-## How It Works
+2. Add required secrets to your repository:
+   - `OPENAI_API_KEY` (if using OpenAI)
+   - `CLAUDE_API_KEY` (if using Claude)
 
-1. When a new issue is opened, the workflow is triggered
-2. The assistant reads the repository content
-3. OpenAI GPT-4 analyzes the issue and repository content
-4. A detailed response is posted as a comment on the issue
-5. Confidence scoring ensures high-quality responses
+That's it! Now when someone opens an issue:
+- AI will analyze the issue content
+- AI will analyze your repository code
+- AI will post a helpful response as a comment
+- Optionally, AI can suggest labels
 
-## Development
+## Configuration Options
 
-```bash
-# Clone the repository
-git clone https://github.com/workflowkit/issue-assistant.git
+| Option | Description | Required | Default |
+|--------|-------------|----------|---------|
+| `github_token` | GitHub token (automatically provided) | Yes | - |
+| `ai_type` | AI model to use (`openai` or `claude`) | Yes | - |
+| `openai_api_key` | OpenAI API Key | Yes* | - |
+| `claude_api_key` | Claude API Key | Yes* | - |
+| `enable_comment` | Enable AI comments on issues | Yes** | false |
+| `enable_label` | Enable AI label suggestions | Yes** | false |
 
-# Install dependencies
-go mod tidy
+*Either `openai_api_key` or `claude_api_key` is required based on `ai_type`
+**At least one feature (`enable_comment` or `enable_label`) must be enabled
 
-# Run tests
-go test ./...
+## Advanced Usage
 
-# Build locally
-go build -o bin/issue-assistant
+### Using with OpenAI:
+```yaml
+- uses: workflowkit/issue-assistant@v1
+  with:
+    github_token: ${{ secrets.GITHUB_TOKEN }}
+    ai_type: "openai"
+    openai_api_key: ${{ secrets.OPENAI_API_KEY }}
+    enable_comment: "true"
+```
 
-# Build Docker image
-docker build -t issue-assistant .
+### Using with Claude:
+```yaml
+- uses: workflowkit/issue-assistant@v1
+  with:
+    github_token: ${{ secrets.GITHUB_TOKEN }}
+    ai_type: "claude"
+    claude_api_key: ${{ secrets.CLAUDE_API_KEY }}
+    enable_label: "true"
+```
+
+### Enable All Features:
+```yaml
+- uses: workflowkit/issue-assistant@v1
+  with:
+    github_token: ${{ secrets.GITHUB_TOKEN }}
+    ai_type: "openai"
+    openai_api_key: ${{ secrets.OPENAI_API_KEY }}
+    enable_comment: "true"
+    enable_label: "true"
 ```
 
 ## Contributing

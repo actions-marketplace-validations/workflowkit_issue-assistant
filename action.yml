@@ -1,8 +1,16 @@
 name: 'Issue Assistant'
-description: 'AI-powered GitHub Issue assistant that provides intelligent responses based on repository content'
+description: 'AI-powered GitHub Issue assistant that provides intelligent responses and label suggestions using OpenAI GPT-4 or Anthropic Claude'
+author: 'workflowkit'
+
+# Categories for GitHub Marketplace
+categories:
+  - 'AI'
+  - 'Code Review'
+  - 'Issue Management'
+
 branding:
-  icon: 'message-square'
-  color: 'blue'
+  icon: 'brain'
+  color: 'purple'
 
 inputs:
   github_token:
@@ -21,11 +29,11 @@ inputs:
   enable_comment:
     description: 'Enable AI-powered code analysis comments on issues'
     required: false
-    default: 'true'
+    default: 'false' # Default is false, but you must enable if you want to use this action
   enable_label:
     description: 'Enable AI-powered label suggestions for issues'
     required: false
-    default: 'false'
+    default: 'false' # Default is false, but you must enable if you want to use this action
 
 runs:
   using: 'docker'
