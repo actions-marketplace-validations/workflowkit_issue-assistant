@@ -58,7 +58,7 @@ func (a *OpenAI) makeRequest(ctx context.Context, systemPrompt, userPrompt strin
 		if err != nil {
 			logger.Log.Warnf("OpenAI request failed attempt: %d: %v", attempt+1, err)
 			lastErr = fmt.Errorf("OpenAI API error: %w", err)
-			baseTemperature += 0.1
+			baseTemperature -= 0.02
 			continue
 		}
 
@@ -76,7 +76,7 @@ func (a *OpenAI) makeRequest(ctx context.Context, systemPrompt, userPrompt strin
 		if err := json.Unmarshal([]byte(content), &jsonContent); err != nil {
 			logger.Log.Warnf("Invalid JSON response: %v", err)
 			lastErr = fmt.Errorf("invalid JSON response: %w", err)
-			baseTemperature += 0.1
+			baseTemperature -= 0.02
 			continue
 		}
 
@@ -95,6 +95,7 @@ Your core responsibilities:
 3. Always include relevant code examples and file references
 4. Maintain a professional and educational tone
 5. Ensure responses are complete and well-organized
+6. MUST return valid JSON with properly escaped strings (\\n for newlines, \" for quotes)
 
 When analyzing code:
 - Start with a high-level overview
@@ -134,6 +135,7 @@ Your responses should be:
 		"5. Provide practical usage examples\n"+
 		"6. Ensure the response is complete (no truncated sentences or examples)\n"+
 		"7. Return ONLY the JSON response, do not wrap it in markdown code blocks\n"+
+		"8. MUST escape all newlines with \\n and quotes with \\\n"+
 		"\n"+
 		"Available Files:\n"+
 		"%s\n"+
