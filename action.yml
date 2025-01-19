@@ -34,6 +34,18 @@ inputs:
     description: 'Enable AI-powered label suggestions for issues'
     required: false
     default: 'false' # Default is false, but you must enable if you want to use this action
+  repository_owner:
+    description: 'Repository owner'
+    required: true
+    default: ${{ github.repository_owner }}
+  repository_name:
+    description: 'Repository name'
+    required: true
+    default: ${{ github.event.repository.name }}
+  event_path:
+    description: 'GitHub event path'
+    required: true
+    default: ${{ github.event_path }}
 
 runs:
   using: 'docker'
@@ -45,6 +57,6 @@ runs:
     CLAUDE_API_KEY: ${{ inputs.claude_api_key }}
     ENABLE_COMMENT: ${{ inputs.enable_comment }}
     ENABLE_LABEL: ${{ inputs.enable_label }}
-    TARGET_REPO_OWNER: ${{ github.repository_owner }}
-    TARGET_REPO_NAME: ${{ github.event.repository.name }}
-    GITHUB_EVENT_PATH: ${{ github.event_path }} 
+    TARGET_REPO_OWNER: ${{ inputs.repository_owner }}
+    TARGET_REPO_NAME: ${{ inputs.repository_name }}
+    GITHUB_EVENT_PATH: ${{ inputs.event_path }}
