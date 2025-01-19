@@ -19,16 +19,6 @@ func main() {
 		logger.Log.Fatal("GITHUB_TOKEN is required")
 	}
 
-	openAIKey := os.Getenv("OPENAI_API_KEY")
-	if openAIKey == "" {
-		logger.Log.Fatal("OPENAI_API_KEY is required")
-	}
-
-	claudeKey := os.Getenv("CLAUDE_API_KEY")
-	if claudeKey == "" {
-		logger.Log.Fatal("CLAUDE_API_KEY is required")
-	}
-
 	aiType := os.Getenv("AI_TYPE")
 	if aiType == "" {
 		logger.Log.Fatal("AI_TYPE is required")
@@ -36,11 +26,19 @@ func main() {
 
 	var apiKey string
 	if aiType == "openai" {
+		openAIKey := os.Getenv("OPENAI_API_KEY")
+		if openAIKey == "" {
+			logger.Log.Fatal("OPENAI_API_KEY is required when using OpenAI")
+		}
 		apiKey = openAIKey
 	} else if aiType == "claude" {
+		claudeKey := os.Getenv("CLAUDE_API_KEY")
+		if claudeKey == "" {
+			logger.Log.Fatal("CLAUDE_API_KEY is required when using Claude")
+		}
 		apiKey = claudeKey
 	} else {
-		logger.Log.Fatal("AI_TYPE is not supported")
+		logger.Log.Fatal("AI_TYPE must be either 'openai' or 'claude'")
 	}
 
 	eventPath := os.Getenv("GITHUB_EVENT_PATH")
