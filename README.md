@@ -1,7 +1,6 @@
 # Issue Assistant
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/workflowkit/issue-assistant)](https://goreportcard.com/report/github.com/workflowkit/issue-assistant)
-[![GitHub Actions](https://github.com/workflowkit/issue-assistant/workflows/issue-analyzer/badge.svg)](https://github.com/workflowkit/issue-assistant/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 AI-powered GitHub Issue assistant that provides intelligent responses based on repository content using various AI models (OpenAI GPT-4, Anthropic Claude).
